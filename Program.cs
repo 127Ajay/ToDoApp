@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using TodoApp;
 using TodoApp.Configuration;
+using TodoApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 

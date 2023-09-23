@@ -3,15 +3,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
-using TodoApp;
+using TodoApp.Data;
 
 #nullable disable
 
 namespace TodoApp.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20230918143723_Initial")]
-    partial class Initial
+    [Migration("20230919054813_Inital")]
+    partial class Inital
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -19,7 +19,7 @@ namespace TodoApp.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.11");
 
-            modelBuilder.Entity("TodoApp.Model.ToDoItem", b =>
+            modelBuilder.Entity("TodoApp.Models.ToDoItem", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
