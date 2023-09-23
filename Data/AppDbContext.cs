@@ -11,5 +11,6 @@ namespace TodoApp.Data
         }
 
         public virtual DbSet<ToDoItem> ToDoItems { get; set; }
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
     }
 }

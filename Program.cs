@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -19,6 +20,20 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(connectionString));
 
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JWTConfig:Secret"]);
+var jwtTokenValidationParameters = new TokenValidationParameters
+{
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = new SymmetricSecurityKey(key),
+    ValidateIssuer = false,
+    ValidateAudience = false,
+    ValidateLifetime = true,
+    RequireExpirationTime = false,
+
+};
+
+builder.Services.AddSingleton(jwtTokenValidationParameters);
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -26,19 +41,8 @@ builder.Services.AddAuthentication(options =>
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 }).AddJwtBearer(jwt =>
 {
-    var key = Encoding.ASCII.GetBytes(builder.Configuration["JWTConfig:Secret"]);
-
     jwt.SaveToken = true;
-    jwt.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuerSigningKey = true,
-        IssuerSigningKey = new SymmetricSecurityKey(key),
-        ValidateIssuer = false,
-        ValidateAudience = false,
-        ValidateLifetime = true,
-        RequireExpirationTime = false,
-
-    };
+    jwt.TokenValidationParameters = jwtTokenValidationParameters;
 });
 
 builder.Services.AddDefaultIdentity<IdentityUser>(options =>

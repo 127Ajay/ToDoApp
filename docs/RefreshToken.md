@@ -1,23 +1,90 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
-using Microsoft.IdentityModel.Tokens;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using System.Text;
-using TodoApp.Configuration;
-using TodoApp.Data;
-using TodoApp.Models;
-using TodoApp.Models.DTO.Request;
-using TodoApp.Models.DTO.Response;
-
-namespace TodoApp.Controllers
+### Refresh JWT with Refresh token
+1. Update `Program.cs` file move **TokenValidationParameters** to use it as a singleton
+```csharp
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JWTConfig:Secret"]);
+var jwtTokenValidationParameters = new TokenValidationParameters
 {
-    [Route("api/[controller]")]
+    ValidateIssuerSigningKey = true,
+    IssuerSigningKey = new SymmetricSecurityKey(key),
+    ValidateIssuer = false,
+    ValidateAudience = false,
+    ValidateLifetime = true,
+    RequireExpirationTime = false,
+
+};
+
+builder.Services.AddSingleton(jwtTokenValidationParameters);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+}).AddJwtBearer(jwt =>
+{
+    jwt.SaveToken = true;
+    jwt.TokenValidationParameters = jwtTokenValidationParameters;
+});
+
+```
+2. Update `AuthResult.cs` file to include RefreshToken
+```csharp
+public class AuthResult
+    {
+        public string Token { get; set; }
+        public bool Success { get; set; }
+        public List<string> Error { get; set; }
+
+        public string RefreshToken {  get; set; }
+    }
+```
+
+3. Create New `TokenRequest.cs` dto.
+   ```csharp
+    public class TokenRequest
+    {
+        [Required]
+        public string Token { get; set; }
+        [Required]
+        public string RefreshToken { get; set; }
+    }
+   ```
+4. Create new `RefreshToken.cs` Model
+   ```csharp
+   
+    public class RefreshToken
+    {
+        public int Id { get; set; }
+        public string UserId { get; set; }
+        public string Token { get; set; }
+        public string JWTId { get; set; }
+        public bool IsUsed { get; set; }
+        public bool IsRevoked { get; set; }
+        public DateTime DateAdded { get; set; }
+        public DateTime ExpireDate { get; set; }
+
+        [ForeignKey(nameof(UserId))]
+        public IdentityUser User { get; set; }
+
+
+    }
+   ```
+5. Update `AppDbContext` to inlcude **RefreshTokens** model.
+```csharp
+    public class AppDbContext : IdentityDbContext
+    {
+        public AppDbContext(DbContextOptions options) : base(options)
+        {
+        }
+
+        public virtual DbSet<ToDoItem> ToDoItems { get; set; }
+        public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+    }
+```
+
+6. Update `AuthManagerController.cs`
+```csharp
+ [Route("api/[controller]")]
     [ApiController]
     public class AuthManagerController : ControllerBase
     {
@@ -293,4 +360,4 @@ namespace TodoApp.Controllers
                 .Select(x=> x[random.Next(x.Length)]).ToArray());
         }
     }
-}
+```
